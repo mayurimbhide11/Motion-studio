@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Alpha · Beta — Combined Experience</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #0c0704;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    overscroll-behavior: none;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  #experience {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    touch-action: pan-y pinch-zoom;
+  }
+
+  .scene {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.6s ease;
+    z-index: 1;
+  }
+  .scene.active {
+    opacity: 1;
+    visibility: visible;
+    z-index: 2;
+  }
+
+  /* --- Navigation arrows --- */
+  .nav-arrow {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(20,12,8,0.4);
+    border: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 50;
+    transition: background 0.25s ease, transform 0.25s ease, opacity 0.25s ease;
+    opacity: 0.75;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-arrow:hover {
+    background: rgba(255,220,168,0.22);
+    opacity: 1;
+    transform: translateY(-50%) scale(1.08);
+  }
+  .nav-arrow svg {
+    width: 20px;
+    height: 20px;
+    stroke: rgba(255,240,220,0.92);
+    fill: none;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  #navPrev { left: 22px; }
+  #navNext { right: 22px; }
+
+  /* --- Dot indicators --- */
+  #navDots {
+    position: fixed;
+    left: 50%;
+    bottom: 3.2%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 50;
+  }
+  #navDots .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.32);
+    cursor: pointer;
+    transition: background 0.25s ease, transform 0.25s ease;
+  }
+  #navDots .dot.active {
+    background: rgba(255,220,168,0.95);
+    transform: scale(1.25);
+  }
+
+  /* --- Scene label chip --- */
+  #sceneLabel {
+    position: fixed;
+    top: 6%;
+    right: 6%;
+    color: rgba(255,240,220,0.7);
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    z-index: 50;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  /* --- Touch devices: no mouse cursor to track, so hide the glow dots
+         and fall back to plain default cursor behavior --- */
+  @media (hover: none), (pointer: coarse) {
+    #cursorDot0, #cursorDot1, #cursorDot2, #cursorDot3 {
+      display: none !important;
+    }
+    #stage0, #stage1, #stage2, #stage3 {
+      cursor: default;
+    }
+  }
+
+  /* --- Tablets (portrait/landscape) --- */
+  @media (max-width: 1024px) {
+    #hint0, #hint1, #hint2, #hint3 {
+      font-size: 14px;
+      padding: 9px 18px;
+      bottom: 9%;
+      max-width: 86%;
+      white-space: normal;
+      text-align: center;
+    }
+    #title0, #title1, #title2, #title3 { font-size: 12px; }
+    #sceneLabel { font-size: 11px; }
+  }
+
+  /* --- Phones --- */
+  @media (max-width: 640px) {
+    .nav-arrow {
+      width: 42px;
+      height: 42px;
+      top: auto;
+      bottom: env(safe-area-inset-bottom, 0px);
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+      transform: none;
+    }
+    .nav-arrow:hover { transform: scale(1.08); }
+    #navPrev { left: max(10px, env(safe-area-inset-left, 0px)); }
+    #navNext { right: max(10px, env(safe-area-inset-right, 0px)); }
+
+    #navDots {
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 68px);
+      gap: 8px;
+    }
+    #navDots .dot { width: 7px; height: 7px; }
+
+    #sceneLabel {
+      top: max(4%, env(safe-area-inset-top, 0px));
+      right: 5%;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+    }
+
+    #title0, #title1, #title2, #title3 {
+      top: max(4%, env(safe-area-inset-top, 0px));
+      left: 5%;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      max-width: 60%;
+    }
+
+    #hint0, #hint1, #hint2, #hint3 {
+      font-size: 12.5px;
+      letter-spacing: 0.04em;
+      padding: 8px 16px;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
+      max-width: 88%;
+      white-space: normal;
+      text-align: center;
+      line-height: 1.35;
+    }
+
+    #progressTrack0, #progressTrack1, #progressTrack2, #progressTrack3 {
+      left: 5%;
+      right: 5%;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 68px);
+    }
+  }
+
+  /* --- Very small phones --- */
+  @media (max-width: 380px) {
+    .nav-arrow { width: 36px; height: 36px; }
+    .nav-arrow svg { width: 16px; height: 16px; }
+    #hint0, #hint1, #hint2, #hint3 { font-size: 11.5px; padding: 7px 14px; }
+    #title0, #title1, #title2, #title3 { font-size: 10px; max-width: 55%; }
+  }
+
+  /* --- Short / landscape phones: tighten vertical chrome --- */
+  @media (max-height: 480px) and (orientation: landscape) {
+    #hint0, #hint1, #hint2, #hint3 {
+      bottom: 6%;
+      padding: 6px 14px;
+      font-size: 11.5px;
+    }
+    #progressTrack0, #progressTrack1, #progressTrack2, #progressTrack3 {
+      bottom: 3%;
+    }
+    #title0, #title1, #title2, #title3,
+    #sceneLabel { top: 4%; }
+    .nav-arrow { width: 36px; height: 36px; }
+    #navDots { bottom: 2%; }
+  }
+/* --- scene 0: zebra_interactive --- */
+
+  
+  #stage0 {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    cursor: none;
+  }
+  video {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    transform: translate(-50%, -50%) scale(1.04);
+    object-fit: cover;
+    will-change: transform;
+    transition: transform 0.15s ease-out;
+  }
+  /* soft warm glow that follows the cursor, screen-blended onto the silhouette scene */
+  #glow0 {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    background: radial-gradient(circle 320px at 50% 50%,
+      rgba(255,196,120,0.28), rgba(255,196,120,0.10) 40%, rgba(255,196,120,0) 70%);
+    transform: translate(0,0);
+    will-change: transform;
+  }
+  /* custom cursor dot */
+  #cursorDot0 {
+    position: fixed;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #ffdca8;
+    box-shadow: 0 0 18px 6px rgba(255,220,168,0.65);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    transition: opacity 0.3s ease;
+  }
+  #hint0 {
+    position: absolute;
+    left: 50%;
+    bottom: 8%;
+    transform: translateX(-50%);
+    color: rgba(255,240,220,0.92);
+    font-size: 15px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(20,12,8,0.35);
+    padding: 10px 20px;
+    border-radius: 999px;
+    backdrop-filter: blur(6px);
+    pointer-events: none;
+    transition: opacity 0.8s ease;
+    z-index: 10;
+    white-space: nowrap;
+  }
+  #hint0.hidden { opacity: 0; }
+
+  #progressTrack0 {
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    bottom: 6%;
+    height: 3px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 3px;
+    z-index: 10;
+    overflow: hidden;
+  }
+  #progressFill0 {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ffb066, #ffe1a8);
+    border-radius: 3px;
+  }
+
+  #title0 {
+    position: absolute;
+    top: 6%;
+    left: 6%;
+    color: rgba(255,240,220,0.85);
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+
+/* --- scene 2: grass_interactive --- */
+
+  
+  #stage2 {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    cursor: none;
+    background: #10160d;
+  }
+  video {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    transform: translate(-50%, -50%) scale(1.04);
+    object-fit: cover;
+    will-change: transform;
+    transition: transform 0.15s ease-out;
+  }
+  /* fresh green glow that follows the cursor, screen-blended onto the scene */
+  #glow2 {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    background: radial-gradient(circle 340px at 50% 50%,
+      rgba(150,230,120,0.24), rgba(150,230,120,0.08) 40%, rgba(150,230,120,0) 70%);
+    will-change: background;
+  }
+  /* custom cursor dot */
+  #cursorDot2 {
+    position: fixed;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #d9ffb0;
+    box-shadow: 0 0 18px 6px rgba(180,255,130,0.6);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    transition: opacity 0.3s ease;
+  }
+  #hint2 {
+    position: absolute;
+    left: 50%;
+    bottom: 8%;
+    transform: translateX(-50%);
+    color: rgba(230,255,220,0.92);
+    font-size: 15px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(10,20,8,0.4);
+    padding: 10px 20px;
+    border-radius: 999px;
+    backdrop-filter: blur(6px);
+    pointer-events: none;
+    transition: opacity 0.8s ease;
+    z-index: 10;
+    white-space: nowrap;
+  }
+  #hint2.hidden { opacity: 0; }
+
+  #progressTrack2 {
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    bottom: 6%;
+    height: 3px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 3px;
+    z-index: 10;
+    overflow: hidden;
+  }
+  #progressFill2 {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #6fbf3f, #d9ffb0);
+    border-radius: 3px;
+  }
+
+  #title2 {
+    position: absolute;
+    top: 6%;
+    left: 6%;
+    color: rgba(230,255,220,0.8);
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+
+/* --- scene 3: zebra_white_interactive --- */
+
+  
+  #stage3 {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    cursor: none;
+    background: #f5f4f0;
+  }
+  video {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    transform: translate(-50%, -50%) scale(1.04);
+    object-fit: cover;
+    will-change: transform;
+    transition: transform 0.15s ease-out;
+  }
+  /* soft white glow that follows the cursor, screen-blended onto the light scene */
+  #glow3 {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    background: radial-gradient(circle 340px at 50% 50%,
+      rgba(255,255,255,0.55), rgba(255,255,255,0.2) 40%, rgba(255,255,255,0) 70%);
+    will-change: background;
+  }
+  /* custom cursor dot */
+  #cursorDot3 {
+    position: fixed;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 0 16px 5px rgba(255,255,255,0.6);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    transition: opacity 0.3s ease;
+  }
+  #hint3 {
+    position: absolute;
+    left: 50%;
+    bottom: 8%;
+    transform: translateX(-50%);
+    color: rgba(50,40,25,0.85);
+    font-size: 15px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.55);
+    padding: 10px 20px;
+    border-radius: 999px;
+    backdrop-filter: blur(6px);
+    pointer-events: none;
+    transition: opacity 0.8s ease;
+    z-index: 10;
+    white-space: nowrap;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  #hint3.hidden { opacity: 0; }
+
+  #progressTrack3 {
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    bottom: 6%;
+    height: 3px;
+    background: rgba(50,40,25,0.12);
+    border-radius: 3px;
+    z-index: 10;
+    overflow: hidden;
+  }
+  #progressFill3 {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #b98a3e, #e8c98a);
+    border-radius: 3px;
+  }
+
+  #title3 {
+    position: absolute;
+    top: 6%;
+    left: 6%;
+    color: rgba(50,40,25,0.75);
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  /* --- Fit (don't crop) the video content on narrow/medium screens ---
+       The four videos above are set up as a "cover" fill (min-width/
+       min-height 100% + object-fit:cover + a slight scale), which only
+       looks right once the window is wide relative to its height. On
+       anything narrower — phones, tablets, and resized laptop windows
+       up to ~1024px — it zooms in hard and clips the "alpha"/"beta"
+       text on both sides. Below that width we switch to a contain-style
+       fit so the full word is always visible, letterboxed top/bottom
+       instead of cropped left/right. The !important beats the
+       per-frame inline transform the mouse/touch-tracking script sets
+       on each video. */
+  @media (max-width: 1024px) {
+    video {
+      top: 50% !important;
+      left: 50% !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      object-fit: contain !important;
+      transform: translate(-50%, -50%) !important;
+    }
+  }
+
+  /* --- Suggest landscape rotation on narrow phones held upright ---
+       This experience is built around wide, landscape-shot video, so
+       held upright on a phone it letterboxes. A gentle one-time prompt
+       nudges people to rotate; it never blocks anything permanently —
+       it clears itself the instant the phone is turned, or on tap. */
+  #rotateHint {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    text-align: center;
+    padding: 32px;
+    background: rgba(10,6,3,0.86);
+    backdrop-filter: blur(6px);
+    color: rgba(255,240,220,0.95);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  #rotateHint.visible { display: flex; }
+  #rotateHint svg {
+    width: 46px;
+    height: 46px;
+    stroke: #ffdca8;
+    fill: none;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    animation: rotateHintSpin 1.8s ease-in-out infinite;
+  }
+  @keyframes rotateHintSpin {
+    0%, 15%  { transform: rotate(0deg); }
+    50%, 65% { transform: rotate(90deg); }
+    100%     { transform: rotate(90deg); }
+  }
+  #rotateHint p {
+    margin: 0;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    line-height: 1.5;
+    max-width: 260px;
+  }
+  #rotateHint button {
+    margin-top: 4px;
+    padding: 10px 22px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,240,220,0.95);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #rotateHint button:active { background: rgba(255,255,255,0.2); }
+
+</style>
+</head>
+<body>
+
+<div id="rotateHint">
+  <svg viewBox="0 0 24 24">
+    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+    <line x1="12" y1="18" x2="12.01" y2="18"></line>
+  </svg>
+  <p>This experience looks best in landscape.<br>Rotate your phone to see the full scene.</p>
+  <button id="rotateHintDismiss" type="button">Continue anyway</button>
+</div>
+
+<div id="experience">
+
+<section class="scene" id="scene0" data-index="0" data-label="Alpha · Beta · Savanah">
+
+  <div id="stage0">
+    <video id="vid0" muted playsinline preload="auto" webkit-playsinline>
+      <source src="videos/zebra.mp4" type="video/mp4">
+    </video>
+    <div id="glow0"></div>
+    <div id="title0">Alpha · Beta · Savanah</div>
+    <div id="progressTrack0"><div id="progressFill0"></div></div>
+    <div id="hint0">Move your cursor left &amp; right — the zebra walks with you</div>
+  </div>
+  <div id="cursorDot0"></div>
+
+
+</section>
+
+<section class="scene" id="scene2" data-index="2" data-label="Alpha · Beta — Grass">
+
+  <div id="stage2">
+    <video id="vid2" muted autoplay playsinline preload="auto" webkit-playsinline>
+      <source src="videos/grass.mp4" type="video/mp4">
+    </video>
+    <div id="glow2"></div>
+    <div id="title2">Alpha · Beta — Grass</div>
+    <div id="progressTrack2"><div id="progressFill2"></div></div>
+    <div id="hint2">Move your cursor left &amp; right to scrub the animation</div>
+  </div>
+  <div id="cursorDot2"></div>
+
+
+</section>
+
+<section class="scene" id="scene3" data-index="3" data-label="Alpha · Beta · Soft Lighting">
+
+  <div id="stage3">
+    <video id="vid3" muted autoplay playsinline preload="auto" webkit-playsinline>
+      <source src="videos/soft-lighting.mp4" type="video/mp4">
+    </video>
+    <div id="glow3"></div>
+    <div id="title3">Alpha · Beta · Soft Lighting</div>
+    <div id="progressTrack3"><div id="progressFill3"></div></div>
+    <div id="hint3">Move your cursor to see the soft lighting on the letters</div>
+  </div>
+  <div id="cursorDot3"></div>
+
+
+</section><script>
+/* --- scene 0: zebra_interactive --- */
+
+(function() {
+  const stage = document.getElementById('stage0');
+  const stageEl = stage;
+  let rafHandle = null;
+  const video = document.getElementById('vid0');
+  const glow = document.getElementById('glow0');
+  const cursorDot = document.getElementById('cursorDot0');
+  const hint = document.getElementById('hint0');
+  const progressFill = document.getElementById('progressFill0');
+
+  let duration = 0;
+  let targetTime = 0;
+  let currentTime = 0;
+  let hasInteracted = false;
+  let lastMoveTs = Date.now();
+  let idleAutoplay = true;
+  let rafId = null;
+
+  video.addEventListener('loadedmetadata', () => {
+    duration = video.duration || 0;
+    // start mid-way so first movement can go either direction
+    targetTime = duration * 0.15;
+    video.currentTime = targetTime;
+    startLoop();
+  });
+
+  function setFromClientX(clientX, clientY) {
+    const rect = stage.getBoundingClientRect();
+    let nx = (clientX - rect.left) / rect.width;
+    nx = Math.min(1, Math.max(0, nx));
+    targetTime = nx * (duration || 1);
+
+    let ny = (clientY - rect.top) / rect.height;
+    ny = Math.min(1, Math.max(0, ny));
+
+    // subtle parallax tilt based on cursor position
+    const tiltX = (nx - 0.5) * 10; // degrees-ish via translate
+    const tiltY = (ny - 0.5) * 6;
+    video.style.transform =
+      `translate(calc(-50% + ${tiltX * -1.6}px), calc(-50% + ${tiltY * -1.2}px)) scale(1.06)`;
+
+    glow.style.transform = `translate(${(nx - 0.5) * 40}px, ${(ny - 0.5) * 40}px)`;
+    glow.style.background =
+      `radial-gradient(circle 320px at ${nx * 100}% ${ny * 100}%, rgba(255,196,120,0.30), rgba(255,196,120,0.10) 40%, rgba(255,196,120,0) 70%)`;
+
+    cursorDot.style.left = clientX + 'px';
+    cursorDot.style.top = clientY + 'px';
+
+    if (!hasInteracted) {
+      hasInteracted = true;
+      hint.classList.add('hidden');
+    }
+    lastMoveTs = Date.now();
+    idleAutoplay = false;
+  }
+
+  stage.addEventListener('mousemove', (e) => setFromClientX(e.clientX, e.clientY));
+  stage.addEventListener('touchmove', (e) => {
+    if (e.touches && e.touches[0]) {
+      setFromClientX(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, { passive: true });
+
+  stage.addEventListener('mouseleave', () => {
+    cursorDot.style.opacity = '0';
+  });
+  stage.addEventListener('mouseenter', () => {
+    cursorDot.style.opacity = '1';
+  });
+
+  function startLoop() {
+    currentTime = video.currentTime;
+    function tick() {
+      if (stageEl.offsetParent === null) { rafHandle = requestAnimationFrame(tick); return; }
+      // idle autoplay drift if no interaction for a while (keeps scene alive)
+      if (Date.now() - lastMoveTs > 3500) {
+        idleAutoplay = true;
+      }
+      if (idleAutoplay && duration) {
+        targetTime += 1 / 60 / 3; // slow gentle forward drift
+        if (targetTime >= duration) targetTime = 0;
+      }
+
+      // smooth (lerp) toward target scrub position for fluid motion
+      currentTime += (targetTime - currentTime) * 0.12;
+      if (duration) {
+        currentTime = Math.min(duration - 0.01, Math.max(0, currentTime));
+        video.currentTime = currentTime;
+        progressFill.style.width = ((currentTime / duration) * 100).toFixed(2) + '%';
+      }
+      rafId = requestAnimationFrame(tick);
+    }
+    rafId = requestAnimationFrame(tick);
+  }
+
+  // Fallback: if metadata already loaded (cache) fire manually
+  if (video.readyState >= 1 && !duration) {
+    duration = video.duration || 0;
+    startLoop();
+  }
+})();
+
+</script>
+
+<script>
+/* --- scene 2: grass_interactive --- */
+
+(function() {
+  const stage = document.getElementById('stage2');
+  const stageEl = stage;
+  let rafHandle = null;
+  const video = document.getElementById('vid2');
+  const glow = document.getElementById('glow2');
+  const cursorDot = document.getElementById('cursorDot2');
+  const hint = document.getElementById('hint2');
+  const progressFill = document.getElementById('progressFill2');
+
+  let duration = 0;
+  let targetTime = 0;
+  let currentTime = 0;
+  let hasInteracted = false;
+  let lastMoveTs = Date.now();
+  let idleAutoplay = true;
+
+  function primeAndStart() {
+    duration = video.duration || 0;
+    targetTime = duration * 0.1;
+    const p = video.play();
+    if (p && typeof p.then === 'function') {
+      p.then(() => {
+        video.pause();
+        video.currentTime = targetTime;
+        startLoop();
+      }).catch(() => {
+        video.currentTime = targetTime;
+        startLoop();
+      });
+    } else {
+      video.currentTime = targetTime;
+      startLoop();
+    }
+  }
+
+  video.addEventListener('loadedmetadata', primeAndStart);
+  if (video.readyState >= 1) primeAndStart();
+
+  function setFromClientX(clientX, clientY) {
+    const rect = stage.getBoundingClientRect();
+    let nx = (clientX - rect.left) / rect.width;
+    nx = Math.min(1, Math.max(0, nx));
+    targetTime = nx * (duration || 1);
+
+    let ny = (clientY - rect.top) / rect.height;
+    ny = Math.min(1, Math.max(0, ny));
+
+    const tiltX = (nx - 0.5) * 10;
+    const tiltY = (ny - 0.5) * 6;
+    video.style.transform =
+      `translate(calc(-50% + ${tiltX * -1.6}px), calc(-50% + ${tiltY * -1.2}px)) scale(1.06)`;
+
+    glow.style.background =
+      `radial-gradient(circle 340px at ${nx * 100}% ${ny * 100}%, rgba(150,230,120,0.28), rgba(150,230,120,0.09) 40%, rgba(150,230,120,0) 70%)`;
+
+    cursorDot.style.left = clientX + 'px';
+    cursorDot.style.top = clientY + 'px';
+
+    if (!hasInteracted) {
+      hasInteracted = true;
+      hint.classList.add('hidden');
+    }
+    lastMoveTs = Date.now();
+    idleAutoplay = false;
+  }
+
+  stage.addEventListener('mousemove', (e) => setFromClientX(e.clientX, e.clientY));
+  stage.addEventListener('touchmove', (e) => {
+    if (e.touches && e.touches[0]) {
+      setFromClientX(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, { passive: true });
+
+  stage.addEventListener('mouseleave', () => { cursorDot.style.opacity = '0'; });
+  stage.addEventListener('mouseenter', () => { cursorDot.style.opacity = '1'; });
+
+  function startLoop() {
+    currentTime = video.currentTime;
+    function tick() {
+      if (stageEl.offsetParent === null) { rafHandle = requestAnimationFrame(tick); return; }
+      if (Date.now() - lastMoveTs > 3500) idleAutoplay = true;
+      if (idleAutoplay && duration) {
+        targetTime += 1 / 60 / 5;
+        if (targetTime >= duration) targetTime = 0;
+      }
+      currentTime += (targetTime - currentTime) * 0.12;
+      if (duration) {
+        currentTime = Math.min(duration - 0.01, Math.max(0, currentTime));
+        video.currentTime = currentTime;
+        progressFill.style.width = ((currentTime / duration) * 100).toFixed(2) + '%';
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+})();
+
+</script>
+
+<script>
+/* --- scene 3: zebra_white_interactive --- */
+
+(function() {
+  const stage = document.getElementById('stage3');
+  const stageEl = stage;
+  let rafHandle = null;
+  const video = document.getElementById('vid3');
+  const glow = document.getElementById('glow3');
+  const cursorDot = document.getElementById('cursorDot3');
+  const hint = document.getElementById('hint3');
+  const progressFill = document.getElementById('progressFill3');
+
+  let duration = 0;
+  let targetTime = 0;
+  let currentTime = 0;
+  let hasInteracted = false;
+  let lastMoveTs = Date.now();
+  let idleAutoplay = true;
+
+  function primeAndStart() {
+    duration = video.duration || 0;
+    targetTime = duration * 0.15;
+    const p = video.play();
+    if (p && typeof p.then === 'function') {
+      p.then(() => {
+        video.pause();
+        video.currentTime = targetTime;
+        startLoop();
+      }).catch(() => {
+        video.currentTime = targetTime;
+        startLoop();
+      });
+    } else {
+      video.currentTime = targetTime;
+      startLoop();
+    }
+  }
+
+  video.addEventListener('loadedmetadata', primeAndStart);
+  if (video.readyState >= 1) primeAndStart();
+
+  function setFromClientX(clientX, clientY) {
+    const rect = stage.getBoundingClientRect();
+    let nx = (clientX - rect.left) / rect.width;
+    nx = Math.min(1, Math.max(0, nx));
+    targetTime = nx * (duration || 1);
+
+    let ny = (clientY - rect.top) / rect.height;
+    ny = Math.min(1, Math.max(0, ny));
+
+    const tiltX = (nx - 0.5) * 10;
+    const tiltY = (ny - 0.5) * 6;
+    video.style.transform =
+      `translate(calc(-50% + ${tiltX * -1.6}px), calc(-50% + ${tiltY * -1.2}px)) scale(1.06)`;
+
+    glow.style.background =
+      `radial-gradient(circle 340px at ${nx * 100}% ${ny * 100}%, rgba(255,255,255,0.55), rgba(255,255,255,0.2) 40%, rgba(255,255,255,0) 70%)`;
+
+    cursorDot.style.left = clientX + 'px';
+    cursorDot.style.top = clientY + 'px';
+
+    if (!hasInteracted) {
+      hasInteracted = true;
+      hint.classList.add('hidden');
+    }
+    lastMoveTs = Date.now();
+    idleAutoplay = false;
+  }
+
+  stage.addEventListener('mousemove', (e) => setFromClientX(e.clientX, e.clientY));
+  stage.addEventListener('touchmove', (e) => {
+    if (e.touches && e.touches[0]) {
+      setFromClientX(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, { passive: true });
+
+  stage.addEventListener('mouseleave', () => { cursorDot.style.opacity = '0'; });
+  stage.addEventListener('mouseenter', () => { cursorDot.style.opacity = '1'; });
+
+  function startLoop() {
+    currentTime = video.currentTime;
+    function tick() {
+      if (stageEl.offsetParent === null) { rafHandle = requestAnimationFrame(tick); return; }
+      if (Date.now() - lastMoveTs > 3500) idleAutoplay = true;
+      if (idleAutoplay && duration) {
+        targetTime += 1 / 60 / 3;
+        if (targetTime >= duration) targetTime = 0;
+      }
+      currentTime += (targetTime - currentTime) * 0.12;
+      if (duration) {
+        currentTime = Math.min(duration - 0.01, Math.max(0, currentTime));
+        video.currentTime = currentTime;
+        progressFill.style.width = ((currentTime / duration) * 100).toFixed(2) + '%';
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+})();
+
+</script>
+<button id="navPrev" class="nav-arrow" aria-label="Previous experience">
+  <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+</button>
+<button id="navNext" class="nav-arrow" aria-label="Next experience">
+  <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+</button>
+
+<div id="navDots"></div>
+<div id="sceneLabel"></div>
+
+<script>
+(function() {
+  const scenes = Array.from(document.querySelectorAll('.scene'));
+  const labels = scenes.map(s => s.getAttribute('data-label') || '');
+  const dotsWrap = document.getElementById('navDots');
+  const sceneLabel = document.getElementById('sceneLabel');
+  let current = 0;
+
+  scenes.forEach((s, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.addEventListener('click', () => goTo(i));
+    dotsWrap.appendChild(dot);
+  });
+  const dots = Array.from(dotsWrap.children);
+
+  function pauseVideoIn(scene) {
+    const v = scene.querySelector('video');
+    if (v && !v.paused) v.pause();
+  }
+  function resumeVideoIn(scene) {
+    const v = scene.querySelector('video');
+    if (v && v.paused) v.play().catch(() => {});
+  }
+
+  function render() {
+    scenes.forEach((s, i) => {
+      if (i === current) {
+        s.classList.add('active');
+        resumeVideoIn(s);
+      } else {
+        s.classList.remove('active');
+        pauseVideoIn(s);
+      }
+    });
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    sceneLabel.textContent = labels[current];
+    sceneLabel.style.opacity = '1';
+    clearTimeout(render._t);
+    render._t = setTimeout(() => { sceneLabel.style.opacity = '0'; }, 1800);
+  }
+
+  function goTo(i) {
+    current = (i + scenes.length) % scenes.length;
+    render();
+  }
+
+  document.getElementById('navPrev').addEventListener('click', () => goTo(current - 1));
+  document.getElementById('navNext').addEventListener('click', () => goTo(current + 1));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+    if (e.key === 'ArrowRight') goTo(current + 1);
+  });
+
+  // basic swipe support for touch devices
+  let touchStartX = null;
+  document.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (touchStartX === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) {
+      if (dx < 0) goTo(current + 1); else goTo(current - 1);
+    }
+    touchStartX = null;
+  }, { passive: true });
+
+  render();
+})();
+</script>
+
+<script>
+/* --- Touch-device polish: swap "cursor" wording for touch language,
+       since there's no mouse pointer to move on phones/tablets --- */
+(function() {
+  var isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+  if (!isTouch) return;
+  document.querySelectorAll('[id^="hint"]').forEach(function(hint) {
+    hint.innerHTML = hint.innerHTML
+      .replace(/Move your cursor left &amp; right/gi, 'Swipe left &amp; right')
+      .replace(/move your cursor/gi, 'drag your finger')
+      .replace(/your cursor/gi, 'your finger');
+  });
+})();
+</script>
+
+<script>
+/* --- Rotate-to-landscape prompt for narrow phones --- */
+(function() {
+  var hint = document.getElementById('rotateHint');
+  var dismissBtn = document.getElementById('rotateHintDismiss');
+  if (!hint || !dismissBtn) return;
+
+  var dismissed = false;
+  var mq = window.matchMedia('(max-width: 640px) and (orientation: portrait)');
+
+  function update() {
+    if (dismissed || !mq.matches) {
+      hint.classList.remove('visible');
+    } else {
+      hint.classList.add('visible');
+    }
+  }
+
+  if (mq.addEventListener) mq.addEventListener('change', update);
+  else if (mq.addListener) mq.addListener(update); // older Safari fallback
+  window.addEventListener('orientationchange', function() { setTimeout(update, 250); });
+  window.addEventListener('resize', update);
+
+  dismissBtn.addEventListener('click', function() {
+    dismissed = true;
+    update();
+  });
+
+  update();
+})();
+</script>
+
+</div>
+</body>
+</html>
